@@ -1,5 +1,6 @@
 package com.example.kampai.ui.theme.bomb
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.kampai.utils.SoundManager
@@ -51,19 +52,23 @@ class BombViewModel @Inject constructor(
 
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-
             while (_timeLeft.value > 0) {
+                // Reproducir sonido
                 try {
+                    // Log para depurar: Busca "KampaiSound" en Logcat
+                    Log.d("KampaiSound", "Intentando reproducir tic_tac")
                     soundManager.playSound(R.raw.tic_tac)
                 } catch (e: Exception) {
+                    Log.e("KampaiSound", "Error reproduciendo sonido: ${e.message}")
                 }
 
+                // Esperar 1 segundo
                 delay(1000)
 
                 _timeLeft.value -= 1
             }
 
-            // Cuando el tiempo llega a 0, explota
+            // Explota
             _uiState.value = GameState.Exploded
             try {
                 soundManager.playSound(R.raw.explosion)
