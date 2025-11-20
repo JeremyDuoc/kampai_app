@@ -1,4 +1,4 @@
-package com.kampai.app.ui.home
+package com.example.kampai.ui.theme.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

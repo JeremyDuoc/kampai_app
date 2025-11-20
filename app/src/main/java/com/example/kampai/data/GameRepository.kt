@@ -5,6 +5,8 @@ import com.example.kampai.domain.models.GameModel
 import com.example.kampai.ui.theme.AccentAmber
 import com.example.kampai.ui.theme.AccentCyan
 import com.example.kampai.ui.theme.AccentRed
+import com.example.kampai.ui.theme.PrimaryViolet
+import com.example.kampai.ui.theme.SecondaryPink
 import com.example.kampai.R
 import javax.inject.Inject
 
@@ -15,7 +17,7 @@ class GameRepository @Inject constructor() {
                 id = "never_have_i_ever",
                 title = "Yo Nunca Nunca",
                 description = "Si lo has hecho, bebes. Secretos salen a la luz.",
-                iconRes = R.drawable.ic_users,
+                iconRes = R.drawable.ic_users, // Asegúrate de usar tus iconos
                 color = AccentCyan,
                 route = "game_never"
             ),
@@ -34,6 +36,22 @@ class GameRepository @Inject constructor() {
                 iconRes = R.drawable.ic_bomb,
                 color = AccentRed,
                 route = "game_bomb"
+            ),
+            GameModel(
+                id = "culture",
+                title = "Cultura Chupística",
+                description = "Nombra elementos de una categoría sin repetir.",
+                iconRes = R.drawable.ic_users, // Puedes crear un icono nuevo o reusar
+                color = PrimaryViolet,
+                route = "game_culture"
+            ),
+            GameModel(
+                id = "high_low",
+                title = "Mayor o Menor",
+                description = "Adivina si la próxima carta es más alta o baja.",
+                iconRes = R.drawable.ic_flame, // Puedes crear un icono nuevo o reusar
+                color = SecondaryPink,
+                route = "game_highlow"
             )
         )
     }
