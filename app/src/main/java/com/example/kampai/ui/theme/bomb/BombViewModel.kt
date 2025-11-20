@@ -38,14 +38,28 @@ class BombViewModel @Inject constructor(
     private var timerJob: Job? = null
 
     private val categories = listOf(
-        "Marcas de Coches", "Pokémones", "Capitales de Europa",
-        "Marcas de Cerveza", "Ingredientes de Pizza", "Películas Disney",
-        "Partes del Cuerpo", "Rima con 'RON'", "Superhéroes Marvel",
-        "Cosas que encuentras en un baño", "Razas de Perros"
+        "Marcas de Coches",
+        "Pokémones",
+        "Capitales de Europa",
+        "Marcas de Cerveza",
+        "Ingredientes de Pizza",
+        "Películas Disney",
+        "Partes del Cuerpo",
+        "Palabras que rimen con 'RON'",
+        "Superhéroes Marvel",
+        "Cosas que encuentras en un baño",
+        "Razas de Perros",
+        "Equipos de Fútbol",
+        "Nombres que empiecen con 'A'",
+        "Frutas",
+        "Países de América",
+        "Instrumentos Musicales",
+        "Colores en inglés",
+        "Películas de Terror"
     )
 
     fun startGame() {
-        val duration = Random.nextInt(10, 30)
+        val duration = Random.nextInt(10, 25)
         _category.value = categories.random()
         _timeLeft.value = duration
         _uiState.value = GameState.Playing
@@ -53,18 +67,22 @@ class BombViewModel @Inject constructor(
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
             while (_timeLeft.value > 0) {
-                // Reproducir sonido
+                // Calcular velocidad del sonido según tiempo restante
+                val soundSpeed = when {
+                    _timeLeft.value <= 3 -> 300L
+                    _timeLeft.value <= 5 -> 500L
+                    _timeLeft.value <= 10 -> 800L
+                    else -> 1000L
+                }
+
                 try {
-                    // Log para depurar: Busca "KampaiSound" en Logcat
-                    Log.d("KampaiSound", "Intentando reproducir tic_tac")
+                    Log.d("KampaiSound", "Reproduciendo tic_tac - Tiempo: ${_timeLeft.value}")
                     soundManager.playSound(R.raw.tic_tac)
                 } catch (e: Exception) {
                     Log.e("KampaiSound", "Error reproduciendo sonido: ${e.message}")
                 }
 
-                // Esperar 1 segundo
-                delay(1000)
-
+                delay(soundSpeed)
                 _timeLeft.value -= 1
             }
 
@@ -72,7 +90,9 @@ class BombViewModel @Inject constructor(
             _uiState.value = GameState.Exploded
             try {
                 soundManager.playSound(R.raw.explosion)
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+                Log.e("KampaiSound", "Error en explosión: ${e.message}")
+            }
         }
     }
 
