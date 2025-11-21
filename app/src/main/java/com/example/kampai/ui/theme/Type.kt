@@ -7,9 +7,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 // Por ahora usamos la fuente por defecto del sistema
-// Si quieres añadir fuentes personalizadas, descarga archivos .ttf
-// y colócalos en res/font/
 val KampaiFontFamily = FontFamily.Default
+val KampaiDisplayFont = FontFamily.Default
 
 val Typography = Typography(
     displayLarge = TextStyle(
@@ -54,18 +53,19 @@ val Typography = Typography(
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
+    // TÍTULO PROFESIONAL
     titleLarge = TextStyle(
-        fontFamily = KampaiFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
+        fontFamily = KampaiDisplayFont,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 26.sp,
+        lineHeight = 30.sp,
+        letterSpacing = 0.15.sp // Reducción de 0.5.sp a 0.15.sp para mejor lectura
     ),
     titleMedium = TextStyle(
         fontFamily = KampaiFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
+        fontSize = 18.sp,
+        lineHeight = 26.sp,
         letterSpacing = 0.15.sp
     ),
     titleSmall = TextStyle(

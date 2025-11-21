@@ -1,36 +1,29 @@
 package com.example.kampai.data
 
+import androidx.compose.ui.graphics.Color
 import com.example.kampai.domain.models.GameModel
-import com.example.kampai.ui.theme.*
+import com.example.kampai.ui.theme.* // Importa todos los colores del tema
 import com.example.kampai.R
 import javax.inject.Inject
 
 class GameRepository @Inject constructor() {
     fun getGames(): List<GameModel> {
         return listOf(
-            // 1. "La Bomba" ELIMINADA de aquí (ahora será un modo dentro de Cultura)
-
-            // 2. "Cultura Chupística" ACTUALIZADA
+            // CULTURA CHUPÍSTICA (CONSOLIDADOS CULTURA + BOMBA)
             GameModel(
                 id = "culture",
                 title = "Cultura Chupística",
-                // Actualizamos la descripción para reflejar los dos modos
-                description = "Modo Clásico o Bomba. ¡Tú eliges el castigo!",
-                // --- AQUÍ CAMBIAS EL ICONO ---
-                // Cambia 'ic_users' por el nombre de tu nuevo icono en drawable
-                iconRes = R.drawable.culture,
+                description = "Modo Clásico o Bomba. Elige el desafío de velocidad.",
+                iconRes = R.drawable.culture, // <--- Icono PNG
                 color = PrimaryViolet,
-                // Cambiamos la ruta para ir a la selección de modo en lugar del juego directo
-                route = "culture_selection"
+                route = "culture_selection" // Rota para la pantalla de selección de modo
             ),
-
-            // ... (El resto de juegos se mantienen igual) ...
 
             GameModel(
                 id = "never_have_i_ever",
                 title = "Yo Nunca Nunca",
-                description = "Si lo has hecho, bebes. Secretos salen a la luz.",
-                iconRes = R.drawable.never, // <--- Cambia este icono si quieres
+                description = "Si lo has hecho, bebes. Secretos picantes revelados.",
+                iconRes = R.drawable.never, // <--- Icono PNG
                 color = AccentCyan,
                 route = "game_never"
             ),
@@ -38,7 +31,7 @@ class GameRepository @Inject constructor() {
                 id = "truth_or_dare",
                 title = "Verdad o Reto",
                 description = "¿Te atreves o confiesas? La presión sube.",
-                iconRes = R.drawable.truth, // <--- Cambia este icono si quieres
+                iconRes = R.drawable.truth, // <--- Icono PNG
                 color = AccentAmber,
                 route = "game_truth"
             ),
@@ -46,7 +39,7 @@ class GameRepository @Inject constructor() {
                 id = "high_low",
                 title = "Mayor o Menor",
                 description = "Adivina si la próxima carta es más alta o baja.",
-                iconRes = R.drawable.highlow, // <--- Cambia este icono si quieres
+                iconRes = R.drawable.highlow, // <--- Icono PNG
                 color = SecondaryPink,
                 route = "game_highlow"
             ),
@@ -54,7 +47,7 @@ class GameRepository @Inject constructor() {
                 id = "medusa",
                 title = "La Medusa",
                 description = "No cruces miradas o bebes.",
-                iconRes = R.drawable.medusa, // <--- Cambia este icono si quieres
+                iconRes = R.drawable.medusa, // <--- Icono PNG
                 color = AccentCyan,
                 route = "game_medusa"
             ),
@@ -62,7 +55,7 @@ class GameRepository @Inject constructor() {
                 id = "charades",
                 title = "Mímica Borracha",
                 description = "Actúa sin hablar. Tu equipo debe adivinar.",
-                iconRes = R.drawable.mimic, //
+                iconRes = R.drawable.mimic, // <--- Icono PNG
                 color = AccentAmber,
                 route = "game_charades"
             ),
@@ -70,7 +63,7 @@ class GameRepository @Inject constructor() {
                 id = "roulette",
                 title = "Ruleta Rusa",
                 description = "6 cámaras, 1 disparo. ¿Tendrás suerte?",
-                iconRes = R.drawable.ruleta, //
+                iconRes = R.drawable.ruleta, // <--- Icono PNG
                 color = AccentRed,
                 route = "game_roulette"
             ),
@@ -78,7 +71,7 @@ class GameRepository @Inject constructor() {
                 id = "judge",
                 title = "El Juez",
                 description = "Obedece la regla absurda o bebe.",
-                iconRes = R.drawable.juez, // <--- Cambia este icono si quieres
+                iconRes = R.drawable.juez, // <--- Icono PNG
                 color = AccentAmber,
                 route = "game_judge"
             ),
@@ -86,7 +79,7 @@ class GameRepository @Inject constructor() {
                 id = "staring",
                 title = "Duelo de Miradas",
                 description = "El primero en parpadear pierde.",
-                iconRes = R.drawable.duelo, // <--- Cambia este icono si quieres
+                iconRes = R.drawable.duelo, // <--- Icono PNG
                 color = PrimaryViolet,
                 route = "game_staring"
             )
