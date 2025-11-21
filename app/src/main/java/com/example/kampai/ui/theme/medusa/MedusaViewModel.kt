@@ -28,22 +28,40 @@ class MedusaViewModel @Inject constructor() : ViewModel() {
 
     private var timerJob: Job? = null
 
+    /**
+     * Inicia una nueva ronda del juego
+     * Cambia el estado a "Counting" e inicia la cuenta regresiva
+     */
     fun startRound() {
         _gameState.value = GameState.Counting
         _countdown.value = 3
 
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-            for (i in 3 downTo 1) {
-                _countdown.value = i
+            // Cuenta de 3 a 1
+            repeat(3) { i ->
+                _countdown.value = 3 - i
                 delay(1000)
             }
+            // Cambiar a estado de acción (¡YA!)
             _gameState.value = GameState.Action
         }
     }
 
+    /**
+     * Reinicia el juego a su estado inicial
+     */
     fun reset() {
         timerJob?.cancel()
         _gameState.value = GameState.Instructions
+        _countdown.value = 3
+    }
+
+    /**
+     * Se ejecuta cuando el ViewModel se destruye
+     */
+    override fun onCleared() {
+        super.onCleared()
+        timerJob?.cancel()
     }
 }

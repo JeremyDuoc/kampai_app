@@ -220,7 +220,7 @@ fun EventPopup(
                                         .background(
                                             brush = Brush.radialGradient(
                                                 colors = listOf(
-                                                    // Al estar dentro del if, Kotlin sabe que no es null
+
                                                     event.selectedPlayer.getAvatarColor().copy(alpha = 0.8f),
                                                     event.selectedPlayer.getAvatarColor().copy(alpha = 0.4f)
                                                 )
@@ -392,7 +392,6 @@ fun AlertAnimation(emoji: String) {
     )
 }
 
-// Resto de composables (WarmupBackground, WarmupHeader, etc.) permanecen igual
 @OptIn(UnstableApi::class)
 @Composable
 fun WarmupBackground() {
@@ -411,7 +410,6 @@ fun WarmupBackground() {
         }
     }
 
-    // Liberar memoria cuando salimos de la pantalla
     DisposableEffect(Unit) {
         onDispose {
             exoPlayer.release()
@@ -519,7 +517,7 @@ fun IdleContent() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Diferentes rondas con frases y eventos aleatorios. ¡Un jugador aleatorio será seleccionado para cada reto!",
+                    text = "Diferentes rondas con frases y eventos aleatorios. ¡Un jugador aleatorio será seleccionado para cada reto! Importante: Para que salgan eventos aleatorios, debes añadir jugadores al grupo en el menú!",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,
