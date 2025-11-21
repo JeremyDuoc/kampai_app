@@ -165,10 +165,11 @@ fun GameCard(game: GameModel, onClick: (String) -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = ImageVector.vectorResource(id = game.iconRes),
+                painter = painterResource(id = game.iconRes), // <--- USAR ESTO PARA PNG
                 contentDescription = null,
-                tint = game.color,
-                modifier = Modifier.size(36.dp)
+                // Importante: Si tu PNG tiene colores propios y quieres que se vean, usa Color.Unspecified.
+                tint = Color.Unspecified,
+                modifier = Modifier.size(68.dp) // Aumenta un poco el tamaño si el PNG se ve chico
             )
         }
 

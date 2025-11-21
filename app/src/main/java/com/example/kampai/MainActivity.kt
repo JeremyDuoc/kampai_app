@@ -15,7 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.kampai.ui.theme.KampaiTheme
 import com.example.kampai.ui.theme.SplashScreen
 import com.example.kampai.ui.theme.home.HomeScreen
-// Importamos las pantallas de los 10 juegos
+// Importamos la NUEVA pantalla de selección
+import com.example.kampai.ui.theme.culture.CultureSelectionScreen
 import com.example.kampai.ui.theme.bomb.BombGameScreen
 import com.example.kampai.ui.theme.never.NeverGameScreen
 import com.example.kampai.ui.theme.truth.TruthGameScreen
@@ -46,8 +47,7 @@ fun KampaiApp() {
 
     NavHost(
         navController = navController,
-        startDestination = "splash", // La app inicia en la pantalla de carga
-        // Animaciones globales de transición
+        startDestination = "splash",
         enterTransition = {
             slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
         },
@@ -61,12 +61,10 @@ fun KampaiApp() {
             slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
         }
     ) {
-        // 0. Pantalla de Carga (Splash)
         composable("splash") {
             SplashScreen(navController = navController)
         }
 
-        // 1. Menú Principal
         composable("home") {
             HomeScreen(
                 onGameSelected = { route ->
@@ -75,46 +73,33 @@ fun KampaiApp() {
             )
         }
 
-        // --- JUEGOS ---
+        // --- NUEVA RUTA INTERMEDIA ---
+        composable("culture_selection") {
+            CultureSelectionScreen(
+                onNavigateToBomb = { navController.navigate("game_bomb") },
+                onNavigateToClassic = { navController.navigate("game_culture") },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // JUEGOS (Se mantienen sus rutas originales internas para que funcione la navegación)
 
         composable("game_bomb") {
             BombGameScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable("game_never") {
-            NeverGameScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable("game_truth") {
-            TruthGameScreen(onBack = { navController.popBackStack() })
         }
 
         composable("game_culture") {
             CultureGameScreen(onBack = { navController.popBackStack() })
         }
 
-        composable("game_highlow") {
-            HighLowGameScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable("game_medusa") {
-            MedusaGameScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable("game_charades") {
-            CharadesGameScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable("game_roulette") {
-            RouletteGameScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable("game_judge") {
-            JudgeGameScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable("game_staring") {
-            StaringGameScreen(onBack = { navController.popBackStack() })
-        }
+        // ... resto de juegos (sin cambios) ...
+        composable("game_never") { NeverGameScreen(onBack = { navController.popBackStack() }) }
+        composable("game_truth") { TruthGameScreen(onBack = { navController.popBackStack() }) }
+        composable("game_highlow") { HighLowGameScreen(onBack = { navController.popBackStack() }) }
+        composable("game_medusa") { MedusaGameScreen(onBack = { navController.popBackStack() }) }
+        composable("game_charades") { CharadesGameScreen(onBack = { navController.popBackStack() }) }
+        composable("game_roulette") { RouletteGameScreen(onBack = { navController.popBackStack() }) }
+        composable("game_judge") { JudgeGameScreen(onBack = { navController.popBackStack() }) }
+        composable("game_staring") { StaringGameScreen(onBack = { navController.popBackStack() }) }
     }
 }
