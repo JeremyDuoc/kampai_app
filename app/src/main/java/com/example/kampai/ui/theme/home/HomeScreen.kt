@@ -1,27 +1,22 @@
-// Rediseño completo del HomeScreen.
-// Enfoque: Limpio, profesional, con jerarquía clara y énfasis en el color de los iconos.
-
 package com.example.kampai.ui.theme.home
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +25,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -41,8 +36,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.kampai.R
 import com.example.kampai.domain.models.GameModel
 import com.example.kampai.ui.theme.PrimaryViolet
-import com.example.kampai.ui.theme.SurfaceDark
+import com.example.kampai.ui.theme.SecondaryPink
 import com.example.kampai.ui.theme.TextGray
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
@@ -51,198 +47,356 @@ fun HomeScreen(
 ) {
     val games by viewModel.games.collectAsState()
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(bottom = 26.dp)
-    ) {
-        item { TopBarSection() }
-        item { HeroBanner() }
-        item { SectionTitle("Juegos disponibles") }
-        items(games) { game -> GameCardRedesigned(game, onGameSelected) }
-    }
-}
-
-// ---------------- TOP BAR (Optimizado) ------------------
-@Composable
-fun TopBarSection() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(R.drawable.logo_kampai),
-                contentDescription = "Logo Kampai",
-                modifier = Modifier
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Fit
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "Kampai!!",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Black,
-                    fontSize = 24.sp
-                ),
-                color = Color.White
-            )
-        }
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = Color.White)
-            }
-            IconButton(onClick = {}) {
-                Icon(Icons.Default.Settings, contentDescription = "Configuracion", tint = Color.White)
-            }
-        }
-    }
-}
-
-// ---------------- HERO BANNER (Limpio y legible) ------------------
-@Composable
-fun HeroBanner() {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .height(180.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        PrimaryViolet.copy(alpha = 0.9f),
-                        PrimaryViolet.copy(alpha = 0.6f)
-                    )
-                )
-            )
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
+        // Fondo animado con círculos decorativos
+        AnimatedBackground()
+
         Column(
             modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(24.dp)
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            Text(
-                text = "¡Elige tu veneno!",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Black,
-                    fontSize = 38.sp
-                ),
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "¡Borrate con tus amigos, o con tu pareja!",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.8f) // Mejor contraste
-            )
+            HeaderSection()
+            Spacer(modifier = Modifier.height(32.dp))
+            GamesList(games, onGameSelected)
         }
     }
-    Spacer(Modifier.height(26.dp))
 }
 
-// ---------------- SECTION TITLE ------------------
 @Composable
-fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        modifier = Modifier.padding(start = 20.dp, bottom = 12.dp),
-        style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold),
-        color = Color.White
+fun AnimatedBackground() {
+    val infiniteTransition = rememberInfiniteTransition(label = "background")
+
+    val offset1 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(20000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "offset1"
     )
+
+    val offset2 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(15000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "offset2"
+    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Círculo decorativo superior izquierdo
+        Box(
+            modifier = Modifier
+                .offset(x = (-80).dp, y = (-80).dp)
+                .size(250.dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            PrimaryViolet.copy(alpha = 0.3f),
+                            PrimaryViolet.copy(alpha = 0.0f)
+                        )
+                    )
+                )
+        )
+
+        // Círculo decorativo inferior derecho
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 80.dp, y = 80.dp)
+                .size(300.dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            SecondaryPink.copy(alpha = 0.25f),
+                            SecondaryPink.copy(alpha = 0.0f)
+                        )
+                    )
+                )
+        )
+    }
 }
 
 @Composable
-fun GameCardRedesigned(game: GameModel, onClick: (String) -> Unit) {
-    var pressed by remember { mutableStateOf(false) }
+fun HeaderSection() {
+    var isLogoVisible by remember { mutableStateOf(false) }
 
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.97f else 1f,
+    val logoScale = animateFloatAsState(
+        targetValue = if (isLogoVisible) 1f else 0.7f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
-        ), label = "scaleAnim"
+        ),
+        label = "logoScale"
     )
 
-    val cardColor by animateColorAsState(
-        targetValue = if (pressed) game.color.copy(alpha = 0.18f) else SurfaceDark,
-        animationSpec = tween(150), // Animación rápida de color
-        label = "colorAnim"
+    val logoAlpha = animateFloatAsState(
+        targetValue = if (isLogoVisible) 1f else 0f,
+        animationSpec = tween(800),
+        label = "logoAlpha"
     )
 
-    Card(
-        modifier = Modifier
-            .padding(horizontal = 20.dp, vertical = 8.dp)
-            .fillMaxWidth()
-            .scale(scale)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        pressed = true
-                        try { awaitRelease() } finally { pressed = false }
-                    },
-                    onTap = { onClick(game.route) }
+    LaunchedEffect(Unit) {
+        delay(100)
+        isLogoVisible = true
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Logo con gradiente de fondo
+        Box(
+            modifier = Modifier
+                .height(140.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            PrimaryViolet.copy(alpha = 0.15f),
+                            SecondaryPink.copy(alpha = 0.15f)
+                        )
+                    )
                 )
-            },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo_kampai),
+                contentDescription = "Logo Kampai",
+                modifier = Modifier
+                    .height(100.dp)
+                    .fillMaxWidth()
+                    .scale(logoScale.value)
+                    .graphicsLayer { alpha = logoAlpha.value },
+                contentScale = ContentScale.Fit
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Texto con animación
+        Text(
+            text = "Elige tu juego favorito",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
+            ),
+            color = Color.White,
+            modifier = Modifier.graphicsLayer { alpha = logoAlpha.value }
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "🍻 La fiesta comienza ahora",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextGray,
+            modifier = Modifier.graphicsLayer { alpha = logoAlpha.value }
+        )
+    }
+}
+
+@Composable
+fun GamesList(games: List<GameModel>, onGameSelected: (String) -> Unit) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(vertical = 8.dp)
+    ) {
+        itemsIndexed(games) { index, game ->
+            AnimatedGameCard(
+                game = game,
+                onClick = onGameSelected,
+                index = index
+            )
+        }
+    }
+}
+
+@Composable
+fun AnimatedGameCard(
+    game: GameModel,
+    onClick: (String) -> Unit,
+    index: Int
+) {
+    var isVisible by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val offsetX by animateFloatAsState(
+        targetValue = if (isVisible) 0f else 100f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "offsetX"
+    )
+
+    val alpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = tween(500),
+        label = "alpha"
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "scale"
+    )
+
+    LaunchedEffect(Unit) {
+        delay(index * 80L)
+        isVisible = true
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                translationX = offsetX
+                this.alpha = alpha
+                scaleX = scale
+                scaleY = scale
+            }
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                // Borde sutil usando el color del juego para definición
-                .border(1.dp, game.color.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-                .padding(18.dp),
+                .height(120.dp)
+                .shadow(
+                    elevation = 12.dp,
+                    shape = RoundedCornerShape(24.dp),
+                    ambientColor = game.color.copy(alpha = 0.3f),
+                    spotColor = game.color.copy(alpha = 0.3f)
+                )
+                .clip(RoundedCornerShape(24.dp))
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surface,
+                            game.color.copy(alpha = 0.08f)
+                        )
+                    )
+                )
+                .border(
+                    width = 2.dp,
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            game.color.copy(alpha = 0.4f),
+                            game.color.copy(alpha = 0.1f)
+                        )
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                )
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null
+                ) {
+                    onClick(game.route)
+                }
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icono
+            // Contenedor del icono con efectos mejorados
             Box(
                 modifier = Modifier
-                    .size(70.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(game.color.copy(alpha = 0.15f)), // Fondo que resalta el icono colorido
+                    .size(80.dp)
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = RoundedCornerShape(20.dp),
+                        ambientColor = game.color,
+                        spotColor = game.color
+                    )
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                game.color.copy(alpha = 0.4f),
+                                game.color.copy(alpha = 0.15f)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = game.color.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(20.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(game.iconRes),
+                Icon(
+                    painter = painterResource(id = game.iconRes),
                     contentDescription = null,
-                    modifier = Modifier.size(50.dp) // Icono más grande
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(70.dp)
                 )
             }
 
             Spacer(modifier = Modifier.width(20.dp))
 
-            // Texto principal
-            Column(modifier = Modifier.weight(1f)) {
+            // Contenido de texto
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = game.title,
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp
+                    ),
+                    color = Color.White
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = game.description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    ),
                     color = TextGray,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            // Flecha
-            Icon(
-                Icons.Filled.ArrowForward,
-                contentDescription = null,
-                modifier = Modifier.size(28.dp),
-                tint = game.color
-            )
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Botón de play animado
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                game.color.copy(alpha = 0.8f),
+                                game.color.copy(alpha = 0.6f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = "Play",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     }
 }

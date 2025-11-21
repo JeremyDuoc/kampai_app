@@ -14,11 +14,9 @@ object GameContent {
 
     // Yo Nunca Masivo (Nivelado)
     val neverQuestions = listOf(
-        // Suaves
         "Yo nunca he estado despierto más de 24 horas.",
         "Yo nunca he mentido sobre mi edad.",
         "Yo nunca he comido comida del suelo.",
-        // Picantes
         "Yo nunca he mandado nudes.",
         "Yo nunca he tenido sexo en un lugar público.",
         "Yo nunca he besado a alguien de este grupo.",
@@ -26,13 +24,11 @@ object GameContent {
         "Yo nunca he sido infiel.",
         "Yo nunca he usado esposas en la cama.",
         "Yo nunca he fingido un orgasmo.",
-        // Graciosos
         "Yo nunca me he chocado con una puerta de vidrio.",
         "Yo nunca he stalkeado a mi ex.",
         "Yo nunca he usado el cepillo de dientes de otra persona."
     )
 
-    // Verdad
     val truths = listOf(
         "¿Cuál es tu peor hábito?",
         "¿A quién de este grupo te llevarías a una isla desierta?",
@@ -41,7 +37,7 @@ object GameContent {
         "¿Cuánto tiempo has pasado sin bañarte?",
         "¿Has sido infiel alguna vez?",
         "Describe tu peor cita.",
-        "¿Quién te cae peor de esta habitación?"
+        "¿Hay alguien que te caiga mal de esta habitación?"
     )
 
     // Reto
