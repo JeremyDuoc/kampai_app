@@ -26,7 +26,11 @@ import com.example.kampai.ui.theme.medusa.MedusaGameScreen
 import com.example.kampai.ui.theme.charades.CharadesGameScreen
 import com.example.kampai.ui.theme.roulette.RouletteGameScreen
 import com.example.kampai.ui.theme.judge.JudgeGameScreen
+import com.example.kampai.ui.theme.likely.MostLikelyScreen
 import com.example.kampai.ui.theme.staring.StaringGameScreen
+// Importante: Importación del PartyManager
+import com.example.kampai.ui.theme.partymanager.PartyManagerScreen
+import com.example.kampai.ui.theme.warmup.WarmupGameScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -69,7 +73,18 @@ fun KampaiApp() {
             HomeScreen(
                 onGameSelected = { route ->
                     navController.navigate(route)
+                },
+                // Aquí pasamos la navegación al PartyManager
+                onPartyManager = {
+                    navController.navigate("party_manager")
                 }
+            )
+        }
+
+        // --- RUTA DEL PARTY MANAGER (Agregada) ---
+        composable("party_manager") {
+            PartyManagerScreen(
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -92,7 +107,19 @@ fun KampaiApp() {
             CultureGameScreen(onBack = { navController.popBackStack() })
         }
 
-        // ... resto de juegos (sin cambios) ...
+        composable("game_warmup") {
+            WarmupGameScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToMiniGame = { route ->
+                    navController.navigate(route)
+                }
+            )
+        }
+        composable("game_likely") {
+            MostLikelyScreen(onBack = { navController.popBackStack() })
+        }
+
+        // ... resto de juegos ...
         composable("game_never") { NeverGameScreen(onBack = { navController.popBackStack() }) }
         composable("game_truth") { TruthGameScreen(onBack = { navController.popBackStack() }) }
         composable("game_highlow") { HighLowGameScreen(onBack = { navController.popBackStack() }) }

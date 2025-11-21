@@ -71,7 +71,7 @@ class GameRepository @Inject constructor() {
                 id = "judge",
                 title = "El Juez",
                 description = "Obedece la regla absurda o bebe.",
-                iconRes = R.drawable.juez, // <--- Icono PNG
+                iconRes = R.drawable.juez,
                 color = AccentAmber,
                 route = "game_judge"
             ),
@@ -79,9 +79,26 @@ class GameRepository @Inject constructor() {
                 id = "staring",
                 title = "Duelo de Miradas",
                 description = "El primero en parpadear pierde.",
-                iconRes = R.drawable.duelo, // <--- Icono PNG
+                iconRes = R.drawable.duelo,
                 color = PrimaryViolet,
                 route = "game_staring"
+            ),
+            GameModel(
+                id = "most_likely",
+                title = "¿Quién es más probable?",
+                description = "Señalen a la persona más probable. El más votado bebe.",
+                iconRes = R.drawable.truth, // Usa un icono temporal
+                color = Color(0xFFE100FF), // SecondaryPink
+                route = "game_likely"
+            ),
+
+            GameModel(
+                id = "warmup",
+                title = "Calentamiento",
+                description = "Mezcla de retos, frases y minijuegos para romper el hielo.",
+                iconRes = R.drawable.warmup,
+                color = Color(0xFFF59E0B),
+                route = "game_warmup"
             )
         )
     }

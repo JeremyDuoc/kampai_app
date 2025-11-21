@@ -14,9 +14,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,14 +40,18 @@ import com.example.kampai.domain.models.GameModel
 import com.example.kampai.ui.theme.PrimaryViolet
 import com.example.kampai.ui.theme.SecondaryPink
 import com.example.kampai.ui.theme.TextGray
+import com.example.kampai.ui.theme.partymanager.PartyManagerViewModel
 import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
-    onGameSelected: (String) -> Unit
+    partyViewModel: PartyManagerViewModel = hiltViewModel(),
+    onGameSelected: (String) -> Unit,
+    onPartyManager: () -> Unit
 ) {
     val games by viewModel.games.collectAsState()
+    val players by partyViewModel.players.collectAsState()
 
     Box(
         modifier = Modifier
@@ -60,9 +66,39 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            HeaderSection()
+            HeaderSection(playerCount = players.size)
             Spacer(modifier = Modifier.height(32.dp))
             GamesList(games, onGameSelected)
+        }
+
+        // FAB para gestionar la party
+        FloatingActionButton(
+            onClick = onPartyManager,
+            containerColor = PrimaryViolet,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+                .size(72.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.People,
+                    contentDescription = "Gestionar Jugadores",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+                if (players.isNotEmpty()) {
+                    Text(
+                        text = "${players.size}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
         }
     }
 }
@@ -92,7 +128,6 @@ fun AnimatedBackground() {
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Círculo decorativo superior izquierdo
         Box(
             modifier = Modifier
                 .offset(x = (-80).dp, y = (-80).dp)
@@ -108,7 +143,6 @@ fun AnimatedBackground() {
                 )
         )
 
-        // Círculo decorativo inferior derecho
         Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -128,7 +162,7 @@ fun AnimatedBackground() {
 }
 
 @Composable
-fun HeaderSection() {
+fun HeaderSection(playerCount: Int) {
     var isLogoVisible by remember { mutableStateOf(false) }
 
     val logoScale = animateFloatAsState(
@@ -155,7 +189,6 @@ fun HeaderSection() {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Logo con gradiente de fondo
         Box(
             modifier = Modifier
                 .height(140.dp)
@@ -186,7 +219,6 @@ fun HeaderSection() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Texto con animación
         Text(
             text = "Elige tu juego favorito",
             style = MaterialTheme.typography.titleLarge.copy(
@@ -200,9 +232,13 @@ fun HeaderSection() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "🍻 La fiesta comienza ahora",
+            text = if (playerCount > 0) {
+                "🍻 $playerCount jugador${if (playerCount != 1) "es" else ""} en la party"
+            } else {
+                "🍻 La fiesta comienza ahora"
+            },
             style = MaterialTheme.typography.bodyMedium,
-            color = TextGray,
+            color = if (playerCount > 0) PrimaryViolet else TextGray,
             modifier = Modifier.graphicsLayer { alpha = logoAlpha.value }
         )
     }
@@ -212,7 +248,7 @@ fun HeaderSection() {
 fun GamesList(games: List<GameModel>, onGameSelected: (String) -> Unit) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(20.dp),
-        contentPadding = PaddingValues(vertical = 8.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 96.dp)
     ) {
         itemsIndexed(games) { index, game ->
             AnimatedGameCard(
@@ -311,7 +347,6 @@ fun AnimatedGameCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Contenedor del icono con efectos mejorados
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -347,7 +382,6 @@ fun AnimatedGameCard(
 
             Spacer(modifier = Modifier.width(20.dp))
 
-            // Contenido de texto
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center
@@ -375,7 +409,6 @@ fun AnimatedGameCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Botón de play animado
             Box(
                 modifier = Modifier
                     .size(48.dp)
