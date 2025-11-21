@@ -24,6 +24,7 @@ import com.example.kampai.ui.theme.culture.CultureGameScreen
 import com.example.kampai.ui.theme.highlow.HighLowGameScreen
 import com.example.kampai.ui.theme.medusa.MedusaGameScreen
 import com.example.kampai.ui.theme.charades.CharadesGameScreen
+import com.example.kampai.ui.theme.home.ClassicsScreen
 import com.example.kampai.ui.theme.impostor.ImpostorGameScreen
 import com.example.kampai.ui.theme.roulette.RouletteGameScreen
 import com.example.kampai.ui.theme.judge.JudgeGameScreen
@@ -75,9 +76,23 @@ fun KampaiApp() {
                 onGameSelected = { route ->
                     navController.navigate(route)
                 },
-                // Aquí pasamos la navegación al PartyManager
+                onNavigateToClassics = {
+                    navController.navigate("classics_screen") // Navegar a clásicos
+                },
                 onPartyManager = {
                     navController.navigate("party_manager")
+                }
+            )
+        }
+
+        // --- AÑADE ESTE BLOQUE ---
+        composable("classics_screen") {
+            ClassicsScreen(
+                onGameSelected = { route ->
+                    navController.navigate(route)
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }

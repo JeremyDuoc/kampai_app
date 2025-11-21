@@ -1,5 +1,6 @@
 package com.example.kampai.ui.theme.home
 
+import android.widget.Toast // Faltaba este import
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,15 +11,21 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Lock // Faltaba este
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.WineBar // Faltaba este
+import androidx.compose.material3.Card // Faltaba este
+import androidx.compose.material3.CardDefaults // Faltaba este
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +36,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext // Faltaba este
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.kampai.R
 import com.example.kampai.domain.models.GameModel
+import com.example.kampai.ui.theme.AccentAmber // Asegúrate de que este color exista en Color.kt
 import com.example.kampai.ui.theme.PrimaryViolet
 import com.example.kampai.ui.theme.SecondaryPink
 import com.example.kampai.ui.theme.TextGray
@@ -48,30 +57,93 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     partyViewModel: PartyManagerViewModel = hiltViewModel(),
     onGameSelected: (String) -> Unit,
+    onNavigateToClassics: () -> Unit,
     onPartyManager: () -> Unit
 ) {
-    val games by viewModel.games.collectAsState()
+    val mostPlayedGames by viewModel.mostPlayedGames.collectAsState()
     val players by partyViewModel.players.collectAsState()
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Fondo animado con círculos decorativos
         AnimatedBackground()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
             HeaderSection(playerCount = players.size)
+
             Spacer(modifier = Modifier.height(32.dp))
-            GamesList(games, onGameSelected)
+
+            // SECCIÓN 1: MÁS JUGADOS
+            Text(
+                text = "🔥 Más Jugados",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // Lista de los 3 juegos principales
+            mostPlayedGames.forEachIndexed { index, game ->
+                AnimatedGameCard(
+                    game = game,
+                    onClick = onGameSelected,
+                    index = index
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // SECCIÓN 2: CATEGORÍAS
+            Text(
+                text = "📂 Categorías",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Botón Clásicos
+                CategoryCard(
+                    title = "Clásicos",
+                    icon = Icons.Filled.WineBar,
+                    color1 = PrimaryViolet,
+                    color2 = SecondaryPink,
+                    onClick = onNavigateToClassics,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Botón +18 (Premium)
+                CategoryCard(
+                    title = "+18 Hot",
+                    subtitle = "(Próximamente)",
+                    icon = Icons.Filled.Lock,
+                    color1 = Color(0xFF1F1F1F),
+                    color2 = Color(0xFF2D2D2D),
+                    borderColor = AccentAmber,
+                    onClick = {
+                        Toast.makeText(context, "Versión Premium próximamente 🔥", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Espacio extra para que el FAB no tape contenido
+            Spacer(modifier = Modifier.height(80.dp))
         }
 
-        // FAB para gestionar la party
+        // FAB para Party Manager
         FloatingActionButton(
             onClick = onPartyManager,
             containerColor = PrimaryViolet,
@@ -96,6 +168,58 @@ fun HomeScreen(
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryCard(
+    title: String,
+    subtitle: String? = null,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    color1: Color,
+    color2: Color,
+    borderColor: Color = Color.Transparent,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(120.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(color1, color2)))
+                .border(1.dp, borderColor, RoundedCornerShape(24.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = if(borderColor != Color.Transparent) borderColor else Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if(borderColor != Color.Transparent) borderColor else Color.White
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        fontSize = 10.sp,
+                        color = Color.Gray
                     )
                 }
             }
@@ -244,6 +368,7 @@ fun HeaderSection(playerCount: Int) {
     }
 }
 
+// Esta función estaba sin usar en el código anterior, pero la dejo por si la necesitas luego
 @Composable
 fun GamesList(games: List<GameModel>, onGameSelected: (String) -> Unit) {
     LazyColumn(

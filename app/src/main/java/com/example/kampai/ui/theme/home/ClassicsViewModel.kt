@@ -12,21 +12,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class ClassicsViewModel @Inject constructor(
     private val repository: GameRepository
 ) : ViewModel() {
 
-    // Solo cargamos los Top 3 aquí
-    private val _mostPlayedGames = MutableStateFlow<List<GameModel>>(emptyList())
-    val mostPlayedGames: StateFlow<List<GameModel>> = _mostPlayedGames.asStateFlow()
+    private val _classicGames = MutableStateFlow<List<GameModel>>(emptyList())
+    val classicGames: StateFlow<List<GameModel>> = _classicGames.asStateFlow()
 
     init {
-        loadGames()
-    }
-
-    private fun loadGames() {
         viewModelScope.launch {
-            _mostPlayedGames.value = repository.getMostPlayedGames()
+            _classicGames.value = repository.getClassicGames()
         }
     }
 }
