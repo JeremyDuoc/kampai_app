@@ -1,5 +1,7 @@
 package com.example.kampai.ui.theme.warmup
 
+import android.net.Uri
+import androidx.annotation.OptIn
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -18,22 +20,41 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
+import com.example.kampai.R
 import com.example.kampai.ui.theme.PrimaryViolet
-import com.example.kampai.ui.theme.SecondaryPink
+import com.example.kampai.ui.theme.partymanager.PartyManagerViewModel
 import kotlinx.coroutines.delay
+
 
 @Composable
 fun WarmupGameScreen(
     viewModel: WarmupViewModel = hiltViewModel(),
-    onBack: () -> Unit,
-    onNavigateToMiniGame: (String) -> Unit
+    partyViewModel: PartyManagerViewModel = hiltViewModel(),
+    onBack: () -> Unit
 ) {
     val gameState by viewModel.gameState.collectAsState()
+    val players by partyViewModel.players.collectAsState()
+
+    // Pasar los jugadores al ViewModel
+    LaunchedEffect(players) {
+        viewModel.setPlayers(players)
+    }
 
     Box(
         modifier = Modifier
@@ -74,14 +95,15 @@ fun WarmupGameScreen(
                                     totalRounds = state.total
                                 )
                             }
-                            is WarmupViewModel.WarmupAction.MiniGame -> {
-                                MiniGameContent(
-                                    gameType = action.gameType,
-                                    onNavigate = onNavigateToMiniGame,
-                                    onSkip = { viewModel.nextAction() }
-                                )
-                            }
+                            else -> {}
                         }
+                    }
+                    is WarmupViewModel.GameState.ShowingEvent -> {
+                        EventPopup(
+                            event = state.event,
+                            onAccept = { viewModel.acceptChallenge() },
+                            onReject = { viewModel.rejectChallenge() }
+                        )
                     }
                     is WarmupViewModel.GameState.Finished -> {
                         FinishedContent()
@@ -101,50 +123,318 @@ fun WarmupGameScreen(
 }
 
 @Composable
-fun WarmupBackground() {
-    val infiniteTransition = rememberInfiniteTransition(label = "background")
+fun EventPopup(
+    event: WarmupViewModel.WarmupAction.Event,
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    var showDialog by remember { mutableStateOf(true) }
 
-    val offset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
+    if (showDialog) {
+        Dialog(
+            onDismissRequest = { },
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surface,
+                                event.color.copy(alpha = 0.15f)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 3.dp,
+                        color = event.color,
+                        shape = RoundedCornerShape(32.dp)
+                    )
+                    .shadow(
+                        elevation = 24.dp,
+                        shape = RoundedCornerShape(32.dp),
+                        ambientColor = event.color,
+                        spotColor = event.color
+                    )
+                    .padding(32.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Animación de alerta
+                    AlertAnimation(emoji = event.emoji)
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Título del evento
+                    Text(
+                        text = "¡UN EVENTO HA APARECIDO!",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            letterSpacing = 2.sp,
+                            fontWeight = FontWeight.Black
+                        ),
+                        color = event.color
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Tipo de evento
+                    Text(
+                        text = event.title,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Black,
+                            fontSize = 28.sp
+                        ),
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+
+
+                    if (event.selectedPlayer != null) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .shadow(12.dp, RoundedCornerShape(20.dp)),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = event.color.copy(alpha = 0.2f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            brush = Brush.radialGradient(
+                                                colors = listOf(
+                                                    // Al estar dentro del if, Kotlin sabe que no es null
+                                                    event.selectedPlayer.getAvatarColor().copy(alpha = 0.8f),
+                                                    event.selectedPlayer.getAvatarColor().copy(alpha = 0.4f)
+                                                )
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = event.selectedPlayer.gender.getEmoji(),
+                                        fontSize = 28.sp
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column {
+                                    Text(
+                                        text = "Jugador seleccionado:",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.Gray
+                                    )
+                                    Text(
+                                        text = event.selectedPlayer.name,
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.Black
+                                        ),
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+                    // --- FIN DE LA MODIFICACIÓN ---
+
+                    // Descripción del reto
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White.copy(alpha = 0.08f)
+                        )
+                    ) {
+                        Text(
+                            text = event.description,
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Black,
+                                fontSize = 24.sp,
+                                lineHeight = 32.sp
+                            ),
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Instrucción
+                    Text(
+                        text = event.instruction,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Botones de acción
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                showDialog = false
+                                onReject()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Red.copy(alpha = 0.8f)
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Rechazar",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    text = "-2 tragos",
+                                    fontSize = 10.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                showDialog = false
+                                onAccept()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = event.color
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Aceptar",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    text = "Reto",
+                                    fontSize = 10.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AlertAnimation(emoji: String) {
+    val infiniteTransition = rememberInfiniteTransition(label = "alert")
+
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(20000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
+            animation = tween(600),
+            repeatMode = RepeatMode.Reverse
         ),
-        label = "offset"
+        label = "scale"
     )
 
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = -5f,
+        targetValue = 5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(200),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "rotation"
+    )
+
+    Text(
+        text = emoji,
+        fontSize = 120.sp,
+        modifier = Modifier
+            .scale(scale)
+            .graphicsLayer { rotationZ = rotation }
+    )
+}
+
+// Resto de composables (WarmupBackground, WarmupHeader, etc.) permanecen igual
+@OptIn(UnstableApi::class)
+@Composable
+fun WarmupBackground() {
+    val context = LocalContext.current
+
+    // Inicializamos el ExoPlayer
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            // Referencia al video en res/raw/background_video
+            val uri = Uri.parse("android.resource://${context.packageName}/${R.raw.background_video}")
+            setMediaItem(MediaItem.fromUri(uri))
+            prepare()
+            playWhenReady = true
+            repeatMode = Player.REPEAT_MODE_ONE
+            volume = 0f
+        }
+    }
+
+    // Liberar memoria cuando salimos de la pantalla
+    DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset(x = (-100).dp, y = (-100).dp)
-                .size(300.dp)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            PrimaryViolet.copy(alpha = 0.3f),
-                            Color.Transparent
-                        )
-                    )
-                )
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    player = exoPlayer
+                    useController = false // Ocultar controles de pausa/play
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM // Zoom para llenar pantalla sin bordes negros
+                }
+            },
+            modifier = Modifier.fillMaxSize()
         )
 
+        //Una capa oscura encima para que el texto blanco se lea bien
         Box(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = 100.dp, y = 100.dp)
-                .size(350.dp)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            SecondaryPink.copy(alpha = 0.25f),
-                            Color.Transparent
-                        )
-                    )
-                )
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.8f))
         )
     }
 }
@@ -167,7 +457,7 @@ fun WarmupHeader(onBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "🔥 Calentamiento",
+                text = "🔥 PartyMix",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Black,
                     fontSize = 24.sp
@@ -175,7 +465,7 @@ fun WarmupHeader(onBack: () -> Unit) {
                 color = Color(0xFFF59E0B)
             )
             Text(
-                text = "Prepárense para beber",
+                text = "Con eventos aleatorios",
                 style = MaterialTheme.typography.labelMedium,
                 color = Color.Gray
             )
@@ -202,10 +492,7 @@ fun IdleContent() {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.scale(scale)
     ) {
-        Text(
-            text = "🎯",
-            fontSize = 120.sp
-        )
+        Text(text = "🎯", fontSize = 120.sp)
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -214,16 +501,14 @@ fun IdleContent() {
                 .fillMaxWidth()
                 .shadow(16.dp, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
                 modifier = Modifier.padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Modo Calentamiento",
+                    text = "Modo PartyMix",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold
                     ),
@@ -234,7 +519,7 @@ fun IdleContent() {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "12 rondas de puro caos. Frases aleatorias, retos y minijuegos. ¡Que empiece la fiesta!",
+                    text = "Diferentes rondas con frases y eventos aleatorios. ¡Un jugador aleatorio será seleccionado para cada reto!",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,
@@ -257,29 +542,8 @@ fun PhraseContent(
 
     val scale by animateFloatAsState(
         targetValue = if (isVisible) 1f else 0.7f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "scale"
-    )
-
-    val animatedColor by animateColorAsState(
-        targetValue = if (isVisible) color else Color.Transparent,
-        animationSpec = tween(600),
-        label = "color"
-    )
-
-    // Animación de pulso para el emoji
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val emojiScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "emojiScale"
     )
 
     LaunchedEffect(phrase) {
@@ -292,56 +556,29 @@ fun PhraseContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.scale(scale)
     ) {
-        // Indicador de progreso
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.Center
         ) {
             Text(
                 text = "Ronda $currentRound/$totalRounds",
-                style = MaterialTheme.typography.labelLarge.copy(
-                    letterSpacing = 1.sp
-                ),
+                style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.sp),
                 color = Color.Gray
             )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Emoji animado
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .scale(emojiScale)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            animatedColor.copy(alpha = 0.3f),
-                            animatedColor.copy(alpha = 0.1f)
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = emoji,
-                fontSize = 72.sp
-            )
-        }
+        Text(text = emoji, fontSize = 100.sp)
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Frase principal
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(20.dp, RoundedCornerShape(28.dp)),
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.Transparent
-            )
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
         ) {
             Box(
                 modifier = Modifier
@@ -350,13 +587,13 @@ fun PhraseContent(
                         brush = Brush.linearGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.surface,
-                                animatedColor.copy(alpha = 0.15f)
+                                color.copy(alpha = 0.15f)
                             )
                         )
                     )
                     .border(
                         width = 2.dp,
-                        color = animatedColor.copy(alpha = 0.5f),
+                        color = color.copy(alpha = 0.5f),
                         shape = RoundedCornerShape(28.dp)
                     )
                     .padding(32.dp),
@@ -372,99 +609,6 @@ fun PhraseContent(
                     textAlign = TextAlign.Center,
                     color = Color.White
                 )
-            }
-        }
-    }
-}
-
-@Composable
-fun MiniGameContent(
-    gameType: WarmupViewModel.MiniGameType,
-    onNavigate: (String) -> Unit,
-    onSkip: () -> Unit
-) {
-    val (title, emoji, description, route) = when (gameType) {
-        WarmupViewModel.MiniGameType.YO_NUNCA -> {
-            Quadruple("Yo Nunca", "🙈", "Ronda rápida de Yo Nunca", "game_never")
-        }
-        WarmupViewModel.MiniGameType.VERDAD_O_RETO -> {
-            Quadruple("Verdad o Reto", "🎲", "Alguien debe elegir", "game_truth")
-        }
-        WarmupViewModel.MiniGameType.QUIEN_ES_MAS_PROBABLE -> {
-            Quadruple("¿Quién es más probable?", "👥", "Señalen a alguien", "game_likely")
-        }
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(horizontal = 16.dp)
-    ) {
-        Text(
-            text = "¡MINIJUEGO!",
-            style = MaterialTheme.typography.labelLarge.copy(
-                letterSpacing = 2.sp,
-                fontWeight = FontWeight.Bold
-            ),
-            color = SecondaryPink
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = emoji,
-            fontSize = 100.sp
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.Black
-            ),
-            color = Color.White,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.Gray,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Button(
-                onClick = onSkip,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Gray.copy(alpha = 0.3f)
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("Saltar", fontWeight = FontWeight.Bold)
-            }
-
-            Button(
-                onClick = { onNavigate(route) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = SecondaryPink
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("¡Jugar!", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -489,15 +633,12 @@ fun FinishedContent() {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.scale(scale)
     ) {
-        Text(
-            text = "🎉",
-            fontSize = 140.sp
-        )
+        Text(text = "🎉", fontSize = 140.sp)
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "¡Calentamiento\nCompletado!",
+            text = "¡PartyMix\nCompletado!",
             style = MaterialTheme.typography.displayMedium.copy(
                 fontWeight = FontWeight.Black
             ),
@@ -509,7 +650,7 @@ fun FinishedContent() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Ahora sí... ¡La fiesta real comienza!",
+            text = "¡Espero que la estén pasando bien!",
             style = MaterialTheme.typography.bodyLarge,
             color = Color.Gray,
             textAlign = TextAlign.Center
@@ -528,9 +669,7 @@ fun ActionButtons(
         is WarmupViewModel.GameState.Idle -> {
             Button(
                 onClick = onStart,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF59E0B)
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
@@ -538,38 +677,28 @@ fun ActionButtons(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = "🔥 Empezar Calentamiento",
+                    text = "🔥 Jugar",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
         is WarmupViewModel.GameState.ShowingAction -> {
-            if (gameState.action !is WarmupViewModel.WarmupAction.MiniGame) {
-                Button(
-                    onClick = onNext,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryViolet
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text(
-                        text = "Siguiente",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+            Button(
+                onClick = onNext,
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryViolet),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(text = "Siguiente", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
         }
         is WarmupViewModel.GameState.Finished -> {
             Button(
                 onClick = onReset,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp),
@@ -583,13 +712,11 @@ fun ActionButtons(
                 )
             }
         }
+        else -> {}
     }
 }
 
-// Helper data class para MiniGameContent
-private data class Quadruple<A, B, C, D>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D
-)
+@Composable
+fun graphicsLayer(
+    block: androidx.compose.ui.graphics.GraphicsLayerScope.() -> Unit
+): Modifier = Modifier.graphicsLayer(block = block)

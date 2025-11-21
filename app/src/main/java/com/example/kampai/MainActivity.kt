@@ -109,10 +109,7 @@ fun KampaiApp() {
 
         composable("game_warmup") {
             WarmupGameScreen(
-                onBack = { navController.popBackStack() },
-                onNavigateToMiniGame = { route ->
-                    navController.navigate(route)
-                }
+                onBack = { navController.popBackStack() }
             )
         }
         composable("game_likely") {

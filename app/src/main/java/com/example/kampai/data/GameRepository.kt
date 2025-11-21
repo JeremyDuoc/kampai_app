@@ -94,8 +94,8 @@ class GameRepository @Inject constructor() {
 
             GameModel(
                 id = "warmup",
-                title = "Calentamiento",
-                description = "Mezcla de retos, frases y minijuegos para romper el hielo.",
+                title = "PartyMix",
+                description = "Muchos retos y minijuegos para borrarte con tus amigos",
                 iconRes = R.drawable.warmup,
                 color = Color(0xFFF59E0B),
                 route = "game_warmup"
