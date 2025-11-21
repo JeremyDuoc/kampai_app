@@ -99,6 +99,14 @@ class GameRepository @Inject constructor() {
                 iconRes = R.drawable.warmup,
                 color = Color(0xFFF59E0B),
                 route = "game_warmup"
+            ),
+            GameModel(
+                id = "impostor",
+                title = "El Impostor",
+                description = "¿Quién está fingiendo? Encuentra al impostor antes de que te engañe.",
+                iconRes = R.drawable.truth,
+                color = Color(0xFFEF4444),
+                route = "game_impostor"
             )
         )
     }

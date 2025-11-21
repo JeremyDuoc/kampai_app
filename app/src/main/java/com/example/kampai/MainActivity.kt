@@ -24,6 +24,7 @@ import com.example.kampai.ui.theme.culture.CultureGameScreen
 import com.example.kampai.ui.theme.highlow.HighLowGameScreen
 import com.example.kampai.ui.theme.medusa.MedusaGameScreen
 import com.example.kampai.ui.theme.charades.CharadesGameScreen
+import com.example.kampai.ui.theme.impostor.ImpostorGameScreen
 import com.example.kampai.ui.theme.roulette.RouletteGameScreen
 import com.example.kampai.ui.theme.judge.JudgeGameScreen
 import com.example.kampai.ui.theme.likely.MostLikelyScreen
@@ -114,6 +115,9 @@ fun KampaiApp() {
         }
         composable("game_likely") {
             MostLikelyScreen(onBack = { navController.popBackStack() })
+        }
+        composable("game_impostor") {
+            ImpostorGameScreen(onBack = { navController.popBackStack() })
         }
 
         // ... resto de juegos ...
