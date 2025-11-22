@@ -858,7 +858,7 @@ fun ResponsiveButton(
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent
+            containerColor = Color.Transparentgit
         ),
         modifier = Modifier
             .fillMaxWidth()
